@@ -1,0 +1,383 @@
+{
+  "backend_model": "claude-haiku-4-5-20251001",
+  "n": 30,
+  "pass_count": 28,
+  "pass_rate": 0.9333,
+  "failure_counts": {
+    "no_tool_when_expected": 0,
+    "tool_when_not_expected": 2,
+    "wrong_tool_name": 0,
+    "missing_arg": 0,
+    "wrong_arg_value": 0,
+    "wrong_arg_type": 0
+  },
+  "results": [
+    {
+      "scenario_id": "weather-paris",
+      "used_tool": true,
+      "chosen_tool": "get_weather",
+      "arguments": {
+        "city": "Paris",
+        "units": "celsius"
+      },
+      "text_excerpt": "",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "weather-tokyo",
+      "used_tool": true,
+      "chosen_tool": "get_weather",
+      "arguments": {
+        "city": "Tokyo",
+        "units": "fahrenheit"
+      },
+      "text_excerpt": "",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "weather-no-units",
+      "used_tool": true,
+      "chosen_tool": "get_weather",
+      "arguments": {
+        "city": "Berlin"
+      },
+      "text_excerpt": "",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "calc-basic",
+      "used_tool": true,
+      "chosen_tool": "calculate",
+      "arguments": {
+        "expression": "1234 * 5678"
+      },
+      "text_excerpt": "",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "calc-mixed",
+      "used_tool": true,
+      "chosen_tool": "calculate",
+      "arguments": {
+        "expression": "(1024 + 256) / 2"
+      },
+      "text_excerpt": "",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "search-news",
+      "used_tool": true,
+      "chosen_tool": "web_search",
+      "arguments": {
+        "query": "latest news about quantum computing",
+        "limit": 10
+      },
+      "text_excerpt": "",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "search-with-limit",
+      "used_tool": true,
+      "chosen_tool": "web_search",
+      "arguments": {
+        "query": "rust programming tutorials",
+        "limit": 5
+      },
+      "text_excerpt": "",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "ticket-printer",
+      "used_tool": true,
+      "chosen_tool": "create_ticket",
+      "arguments": {
+        "title": "Printer queue stuck",
+        "body": "The printer queue appears to be stuck and requires immediate attention to resolve the issue.",
+        "priority": "high"
+      },
+      "text_excerpt": "",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "ticket-low",
+      "used_tool": true,
+      "chosen_tool": "create_ticket",
+      "arguments": {
+        "title": "keyboard sticky keys",
+        "body": "Keyboard has sticky keys. Will replace tomorrow.",
+        "priority": "low"
+      },
+      "text_excerpt": "",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "ticket-critical-outage",
+      "used_tool": true,
+      "chosen_tool": "create_ticket",
+      "arguments": {
+        "title": "Production DB is down",
+        "body": "URGENT: Production database is currently down. Immediate action required.",
+        "priority": "critical"
+      },
+      "text_excerpt": "",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "email-followup",
+      "used_tool": true,
+      "chosen_tool": "send_email",
+      "arguments": {
+        "to": "bob@example.com",
+        "subject": "Follow up",
+        "body": "Are we still on for tomorrow?"
+      },
+      "text_excerpt": "",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "email-thank-you",
+      "used_tool": true,
+      "chosen_tool": "send_email",
+      "arguments": {
+        "to": "alice@example.com",
+        "subject": "Thank You for Yesterday's Demo",
+        "body": "Hi Alice,\n\nThank you so much for taking the time to do the demo yesterday. I really appreciated your thorough explanation and the insights you shared.\n\nBest regards"
+      },
+      "text_excerpt": "",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "joke",
+      "used_tool": false,
+      "chosen_tool": null,
+      "arguments": {},
+      "text_excerpt": "Here's a joke for you:\n\nWhy don't cats play poker in the jungle?\n\nBecause there are too many cheetahs! \ud83d\udc31",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "definition",
+      "used_tool": false,
+      "chosen_tool": null,
+      "arguments": {},
+      "text_excerpt": "Photosynthesis is the process by which plants, algae, and some bacteria convert sunlight, water, and carbon dioxide into glucose (sugar) and",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "preference",
+      "used_tool": true,
+      "chosen_tool": "web_search",
+      "arguments": {
+        "query": "best thriller movies to watch 2024",
+        "limit": 5
+      },
+      "text_excerpt": "I don't have a specific tool to recommend movies based on your preferences, but I can search the web for some current thriller recommendatio",
+      "passed": false,
+      "failures": [
+        "tool_when_not_expected"
+      ],
+      "notes": [
+        "called 'web_search' when none was expected"
+      ]
+    },
+    {
+      "scenario_id": "small-talk",
+      "used_tool": false,
+      "chosen_tool": null,
+      "arguments": {},
+      "text_excerpt": "I'm doing well, thank you for asking! I'm here and ready to help you with whatever you need. \n\nI have access to several tools that I can use",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "math-no-need",
+      "used_tool": true,
+      "chosen_tool": "calculate",
+      "arguments": {
+        "expression": "2 + 2"
+      },
+      "text_excerpt": "",
+      "passed": false,
+      "failures": [
+        "tool_when_not_expected"
+      ],
+      "notes": [
+        "called 'calculate' when none was expected"
+      ]
+    },
+    {
+      "scenario_id": "general-knowledge",
+      "used_tool": false,
+      "chosen_tool": null,
+      "arguments": {},
+      "text_excerpt": "The first president of the United States was **George Washington**. He served two terms from 1789 to 1797 and is often called the \"Father of",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "creative",
+      "used_tool": false,
+      "chosen_tool": null,
+      "arguments": {},
+      "text_excerpt": "Here's a haiku about the ocean:\n\nWaves crash on the shore\nSalt spray kisses my tired face\nPeace in the blue deep",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "explain",
+      "used_tool": false,
+      "chosen_tool": null,
+      "arguments": {},
+      "text_excerpt": "A **black hole** is a region in space where gravity is so incredibly strong that nothing\u2014not even light\u2014can escape from it once it crosses a",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "unsupported-translation",
+      "used_tool": false,
+      "chosen_tool": null,
+      "arguments": {},
+      "text_excerpt": "The French translation of \"good morning\" is **\"Bonjour\"** (literally \"good day\") or **\"Bon matin\"** (more literally \"good morning\").\n\n\"Bonjo",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "unsupported-image",
+      "used_tool": false,
+      "chosen_tool": null,
+      "arguments": {},
+      "text_excerpt": "I appreciate your interest, but I don't have the ability to generate, create, or produce images. The tools available to me are limited to:\n\n",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "unsupported-shell",
+      "used_tool": false,
+      "chosen_tool": null,
+      "arguments": {},
+      "text_excerpt": "I don't have a tool available to execute shell commands or access your file system directly. The tools I have access to are:\n\n1. **get_weath",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "unsupported-stock",
+      "used_tool": false,
+      "chosen_tool": null,
+      "arguments": {},
+      "text_excerpt": "I don't have a tool available to check real-time stock prices. However, I can help you find this information in a couple of ways:\n\n1. **Web ",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "calc-as-words",
+      "used_tool": true,
+      "chosen_tool": "calculate",
+      "arguments": {
+        "expression": "1200 + 17"
+      },
+      "text_excerpt": "",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "weather-with-typo",
+      "used_tool": true,
+      "chosen_tool": "get_weather",
+      "arguments": {
+        "city": "Paris",
+        "units": "celsius"
+      },
+      "text_excerpt": "I'll get the weather for Paris in Celsius for you.",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "ticket-no-explicit-priority",
+      "used_tool": true,
+      "chosen_tool": "create_ticket",
+      "arguments": {
+        "title": "WiFi is flaky in conference room B",
+        "body": "The WiFi connection in conference room B is experiencing intermittent connectivity issues. Please investigate and resolve.",
+        "priority": "medium"
+      },
+      "text_excerpt": "",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "multi-search-then-email",
+      "used_tool": true,
+      "chosen_tool": "web_search",
+      "arguments": {
+        "query": "current CEO of OpenAI",
+        "limit": 1
+      },
+      "text_excerpt": "I'll search for the current CEO of OpenAI and then send that information to bob@example.com.",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "multi-calc-then-ticket",
+      "used_tool": true,
+      "chosen_tool": "calculate",
+      "arguments": {
+        "expression": "84 * 3"
+      },
+      "text_excerpt": "",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    },
+    {
+      "scenario_id": "multi-weather-then-search",
+      "used_tool": true,
+      "chosen_tool": "get_weather",
+      "arguments": {
+        "city": "Madrid"
+      },
+      "text_excerpt": "I'll check the weather in Madrid first, and then search for outdoor caf\u00e9s that would be suitable for those conditions.",
+      "passed": true,
+      "failures": [],
+      "notes": []
+    }
+  ]
+}
