@@ -1,6 +1,6 @@
 # tool-use-eval
 
-> Function-calling benchmark for LLMs with **seven named failure modes**. Real Claude Haiku 4.5 run on 30 hand-curated scenarios: **93.3% pass rate** under the v0.1 scorer, both failures of type `tool_when_not_expected` (used a tool where a text answer was fine).
+> Function-calling benchmark for LLMs with **seven named failure modes**. Real Claude Haiku 4.5 run on 30 hand-curated scenarios: **at most 93.3% pass rate under the current scorer** (93.3% under v0.1, which scored only the last `tool_use` block of each response). Both v0.1 failures were `tool_when_not_expected` (used a tool where a text answer was fine).
 
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Tests](https://img.shields.io/badge/tests-18%20passing-brightgreen)](#tests) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)]()
 
@@ -12,7 +12,7 @@
 |---|---:|
 | Scenarios | 30 |
 | Pass count | 28 |
-| **Pass rate** | **93.3%** |
+| **Pass rate** (v0.1 scorer; upper bound under the current one) | **93.3%** |
 | Cost (one full run) | ~$0.02 |
 
 Failure breakdown:
@@ -34,7 +34,7 @@ The two failures are both judgment-call cases:
 
 Raw output: [`bench/anthropic_results.json`](bench/anthropic_results.json). Reproduce with `python bench/run_anthropic.py`.
 
-This run predates multi-call scoring: the v0.1 scorer read only the last `tool_use` block of each response, and the saved results keep only that block, so the run cannot be re-scored offline. Re-run the bench to get the number under the current scorer; new runs record every call under `tool_calls`.
+This run predates multi-call scoring: the v0.1 scorer read only the last `tool_use` block of each response, and the saved results keep only that block, so the run cannot be re-scored offline. The current scorer only adds failures (a pass now needs every block, the last one included, to be right), so 93.3% is an upper bound until the bench is re-run; new runs record every call under `tool_calls`.
 
 ## Why this exists
 
