@@ -5,7 +5,15 @@ from __future__ import annotations
 import sys
 from types import SimpleNamespace
 
-from tool_use_eval import AnthropicBackend, FailureMode, Scenario, ToolCall, evaluate, score_call
+from tool_use_eval import (
+    AnthropicBackend,
+    FailureMode,
+    MockBackend,
+    Scenario,
+    ToolCall,
+    evaluate,
+    score_call,
+)
 from tool_use_eval.backends import ModelResponse
 
 WEATHER_TOOL = {
@@ -75,6 +83,14 @@ def test_right_call_followed_by_wrong_args_fails() -> None:
     )
     card = score_call(WEATHER, resp)
     assert card.failures == [FailureMode.WRONG_ARG_VALUE]
+
+
+def test_failure_counts_count_scenarios_not_calls() -> None:
+    no_city = ToolCall(name="get_weather", arguments={})
+    backend = MockBackend(handler=lambda *_: ModelResponse(tool_calls=[no_city, no_city]))
+    summary = evaluate(backend, [WEATHER])
+    assert summary.results[0].scorecard.failures == [FailureMode.MISSING_ARG] * 2
+    assert summary.failure_counts[FailureMode.MISSING_ARG.value] == 1
 
 
 def test_every_call_correct_passes() -> None:

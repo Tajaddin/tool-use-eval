@@ -2,7 +2,7 @@
 
 > Function-calling benchmark for LLMs with **six named failure modes**. Real Claude Haiku 4.5 run on 30 hand-curated scenarios: **93.3% pass rate** under the v0.1 scorer, both failures of type `tool_when_not_expected` (used a tool where a text answer was fine).
 
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Tests](https://img.shields.io/badge/tests-16%20passing-brightgreen)](#tests) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)]()
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Tests](https://img.shields.io/badge/tests-17%20passing-brightgreen)](#tests) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)]()
 
 ## Hero benchmark
 
@@ -104,7 +104,7 @@ The `Scenario` model is intentionally minimal — drop in any of your own tools.
 | `WRONG_ARG_TYPE` | required arg present but its Python type didn't match the tool's JSON-Schema `type` |
 | `WRONG_ARG_VALUE` | required arg present but a `arg_value_checks[name](value)` returned False |
 
-A single response can hit multiple modes (e.g., correct tool but missing arg + wrong type on another arg). Every `tool_use` block in the response is scored, so a wrong call followed by the right one still fails. The scorecard lists every failure.
+A single response can hit multiple modes (e.g., correct tool but missing arg + wrong type on another arg). Every `tool_use` block in the response is scored, so a wrong call followed by the right one still fails. The scorecard lists every failure, one per failing call; `EvalSummary.failure_counts` counts each mode once per scenario, so it adds up to scenarios, not calls.
 
 ## Built-in scenario coverage
 
@@ -126,7 +126,7 @@ pytest -q
 ```
 
 ```
-16 passed in 0.05s
+17 passed
 ```
 
 Each failure mode has a dedicated test that produces it via `MockBackend`. An end-to-end test runs the first 5 built-in scenarios through a deterministic mock. `tests/test_multi_call.py` feeds `AnthropicBackend` a stubbed client whose response holds several `tool_use` blocks and checks every one is scored.
@@ -140,7 +140,7 @@ Each failure mode has a dedicated test that produces it via `MockBackend`. An en
 │   ├── runner.py      # Scenario, FailureMode, score_call, evaluate, EvalSummary
 │   ├── backends.py    # ToolUseBackend protocol + Mock + Anthropic adapter
 │   └── dataset.py     # built-in 30 scenarios + 5 tool definitions
-├── tests/             # 16 pytest cases: one per failure mode, end-to-end, multi-call scoring
+├── tests/             # 17 pytest cases: one per failure mode, end-to-end, multi-call scoring
 └── bench/
     ├── run_anthropic.py     # real Haiku 4.5 run
     └── anthropic_results.json

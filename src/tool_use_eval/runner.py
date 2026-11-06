@@ -160,7 +160,8 @@ def evaluate(backend: ToolUseBackend, scenarios: list[Scenario], *, system: str 
     for sc in scenarios:
         resp = backend.call(sc.prompt, sc.tools, system=system)
         sc_card = score_call(sc, resp)
-        for f in sc_card.failures:
+        # Counts are scenarios per mode; the scorecard keeps one entry per failing call.
+        for f in set(sc_card.failures):
             failure_counts[f.value] += 1
         if sc_card.passed:
             n_pass += 1
