@@ -1,10 +1,11 @@
 """Scenario, scoring, and evaluation runner.
 
-Six named failure modes:
+Seven named failure modes:
 
 * ``NO_TOOL_WHEN_EXPECTED`` — model replied in text when a tool was the right answer
 * ``TOOL_WHEN_NOT_EXPECTED`` — model invoked a tool on a chit-chat prompt
 * ``WRONG_TOOL_NAME`` — model picked the wrong tool from the available list (or named a tool not in the list)
+* ``EXTRA_TOOL_CALL`` — model called the expected tool, then another tool in the same response
 * ``MISSING_ARG`` — model invoked the correct tool but omitted a required argument
 * ``WRONG_ARG_VALUE`` — required arg present but failed the scenario's value check
 * ``WRONG_ARG_TYPE`` — arg present but not the type the tool's schema requires
@@ -23,6 +24,7 @@ class FailureMode(str, Enum):
     NO_TOOL_WHEN_EXPECTED = "no_tool_when_expected"
     TOOL_WHEN_NOT_EXPECTED = "tool_when_not_expected"
     WRONG_TOOL_NAME = "wrong_tool_name"
+    EXTRA_TOOL_CALL = "extra_tool_call"
     MISSING_ARG = "missing_arg"
     WRONG_ARG_VALUE = "wrong_arg_value"
     WRONG_ARG_TYPE = "wrong_arg_type"
@@ -94,12 +96,18 @@ def score_call(scenario: Scenario, response: ModelResponse) -> Scorecard:
 
     tool_schema = next((t["input_schema"] for t in scenario.tools if t["name"] == expected), {})
 
+    called_expected = False
     for call in response.tool_calls:
         if call.name != expected:
-            failures.append(FailureMode.WRONG_TOOL_NAME)
-            notes.append(f"called {call.name!r}, expected {expected!r}")
             # Wrong tool means the call is wrong regardless of its args.
+            if called_expected:
+                failures.append(FailureMode.EXTRA_TOOL_CALL)
+                notes.append(f"called {call.name!r} after {expected!r} in the same response")
+            else:
+                failures.append(FailureMode.WRONG_TOOL_NAME)
+                notes.append(f"called {call.name!r}, expected {expected!r}")
             continue
+        called_expected = True
 
         args = call.arguments or {}
         for req in scenario.required_args:

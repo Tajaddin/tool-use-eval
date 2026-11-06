@@ -11,6 +11,7 @@ from tool_use_eval import (
     MockBackend,
     Scenario,
     ToolCall,
+    builtin_scenarios,
     evaluate,
     score_call,
 )
@@ -72,6 +73,20 @@ def test_wrong_call_followed_by_right_call_fails(monkeypatch) -> None:
     assert summary.pass_count == 0
     assert summary.failure_counts[FailureMode.WRONG_TOOL_NAME.value] == 1
     assert [c.name for c in summary.results[0].tool_calls] == ["calculate", "get_weather"]
+
+
+def test_extra_call_after_the_expected_one_is_its_own_mode() -> None:
+    search = next(s for s in builtin_scenarios() if s.id == "multi-search-then-email")
+    resp = ModelResponse(
+        tool_calls=[
+            ToolCall(name="web_search", arguments={"query": "OpenAI CEO"}),
+            ToolCall(name="send_email", arguments={"to": "bob@example.com"}),
+        ]
+    )
+    card = score_call(search, resp)
+    assert not card.passed
+    assert card.failures == [FailureMode.EXTRA_TOOL_CALL]
+    assert "'send_email'" in card.notes[0]
 
 
 def test_right_call_followed_by_wrong_args_fails() -> None:
