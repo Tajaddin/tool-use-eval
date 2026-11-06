@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Callable
 
-from tool_use_eval.backends import ModelResponse, ToolUseBackend
+from tool_use_eval.backends import ModelResponse, ToolCall, ToolUseBackend
 
 
 class FailureMode(str, Enum):
@@ -73,6 +73,7 @@ def _matches_schema_type(value, jsonschema_type: str | None) -> bool:
 
 
 def score_call(scenario: Scenario, response: ModelResponse) -> Scorecard:
+    """Score every tool call in the response; it passes only if all of them are right."""
     failures: list[FailureMode] = []
     notes: list[str] = []
 
@@ -81,49 +82,50 @@ def score_call(scenario: Scenario, response: ModelResponse) -> Scorecard:
     if expected is None:
         if response.used_tool:
             failures.append(FailureMode.TOOL_WHEN_NOT_EXPECTED)
-            notes.append(f"called {response.tool_call.name!r} when none was expected")
+            names = ", ".join(repr(c.name) for c in response.tool_calls)
+            notes.append(f"called {names} when none was expected")
         return Scorecard(scenario_id=scenario.id, passed=not failures, failures=failures, notes=notes)
 
     # expected_tool is not None — we want exactly that tool.
-    if response.tool_call is None:
+    if not response.tool_calls:
         failures.append(FailureMode.NO_TOOL_WHEN_EXPECTED)
         notes.append("replied in text when a tool call was required")
         return Scorecard(scenario_id=scenario.id, passed=False, failures=failures, notes=notes)
 
-    if response.tool_call.name != expected:
-        failures.append(FailureMode.WRONG_TOOL_NAME)
-        notes.append(f"called {response.tool_call.name!r}, expected {expected!r}")
-        # Still check args under that wrong tool? Skip — wrong tool means the call is wrong regardless.
-        return Scorecard(scenario_id=scenario.id, passed=False, failures=failures, notes=notes)
-
-    # Correct tool — check arguments.
-    args = response.tool_call.arguments or {}
     tool_schema = next((t["input_schema"] for t in scenario.tools if t["name"] == expected), {})
 
-    for req in scenario.required_args:
-        if req not in args:
-            failures.append(FailureMode.MISSING_ARG)
-            notes.append(f"missing arg {req!r}")
+    for call in response.tool_calls:
+        if call.name != expected:
+            failures.append(FailureMode.WRONG_TOOL_NAME)
+            notes.append(f"called {call.name!r}, expected {expected!r}")
+            # Wrong tool means the call is wrong regardless of its args.
             continue
-        # Type check.
-        expected_type = _type_of_schema(tool_schema, req)
-        if not _matches_schema_type(args[req], expected_type):
-            failures.append(FailureMode.WRONG_ARG_TYPE)
-            notes.append(
-                f"arg {req!r} has wrong type: got {type(args[req]).__name__}, "
-                f"schema wants {expected_type}"
-            )
 
-    for arg_name, check in scenario.arg_value_checks.items():
-        if arg_name in args:
-            try:
-                ok = bool(check(args[arg_name]))
-            except Exception as exc:  # noqa: BLE001
-                ok = False
-                notes.append(f"value check for {arg_name!r} raised {type(exc).__name__}")
-            if not ok:
-                failures.append(FailureMode.WRONG_ARG_VALUE)
-                notes.append(f"arg {arg_name!r}={args[arg_name]!r} failed value check")
+        args = call.arguments or {}
+        for req in scenario.required_args:
+            if req not in args:
+                failures.append(FailureMode.MISSING_ARG)
+                notes.append(f"missing arg {req!r}")
+                continue
+            # Type check.
+            expected_type = _type_of_schema(tool_schema, req)
+            if not _matches_schema_type(args[req], expected_type):
+                failures.append(FailureMode.WRONG_ARG_TYPE)
+                notes.append(
+                    f"arg {req!r} has wrong type: got {type(args[req]).__name__}, "
+                    f"schema wants {expected_type}"
+                )
+
+        for arg_name, check in scenario.arg_value_checks.items():
+            if arg_name in args:
+                try:
+                    ok = bool(check(args[arg_name]))
+                except Exception as exc:  # noqa: BLE001
+                    ok = False
+                    notes.append(f"value check for {arg_name!r} raised {type(exc).__name__}")
+                if not ok:
+                    failures.append(FailureMode.WRONG_ARG_VALUE)
+                    notes.append(f"arg {arg_name!r}={args[arg_name]!r} failed value check")
 
     passed = not failures
     return Scorecard(scenario_id=scenario.id, passed=passed, failures=failures, notes=notes)
@@ -138,6 +140,7 @@ class EvalResult:
     arguments: dict
     text_excerpt: str
     scorecard: Scorecard
+    tool_calls: list[ToolCall] = field(default_factory=list)
 
 
 @dataclass
@@ -170,6 +173,7 @@ def evaluate(backend: ToolUseBackend, scenarios: list[Scenario], *, system: str 
                 arguments=resp.tool_call.arguments if resp.tool_call else {},
                 text_excerpt=(resp.text or "")[:140],
                 scorecard=sc_card,
+                tool_calls=list(resp.tool_calls),
             )
         )
     return EvalSummary(

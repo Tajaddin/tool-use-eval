@@ -1,8 +1,8 @@
 # tool-use-eval
 
-> Function-calling benchmark for LLMs with **six named failure modes**. Real Claude Haiku 4.5 run on 30 hand-curated scenarios: **93.3% pass rate**, both failures of type `tool_when_not_expected` (used a tool where a text answer was fine).
+> Function-calling benchmark for LLMs with **six named failure modes**. Real Claude Haiku 4.5 run on 30 hand-curated scenarios: **93.3% pass rate** under the v0.1 scorer, both failures of type `tool_when_not_expected` (used a tool where a text answer was fine).
 
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Tests](https://img.shields.io/badge/tests-10%20passing-brightgreen)](#tests) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)]()
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Tests](https://img.shields.io/badge/tests-16%20passing-brightgreen)](#tests) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)]()
 
 ## Hero benchmark
 
@@ -32,6 +32,8 @@ The two failures are both judgment-call cases:
 2. `math-no-need`: "What is 2 + 2?" → Haiku called `calculate(expression="2 + 2")`. Same pattern.
 
 Raw output: [`bench/anthropic_results.json`](bench/anthropic_results.json). Reproduce with `python bench/run_anthropic.py`.
+
+This run predates multi-call scoring: the v0.1 scorer read only the last `tool_use` block of each response, and the saved results keep only that block, so the run cannot be re-scored offline. Re-run the bench to get the number under the current scorer; new runs record every call under `tool_calls`.
 
 ## Why this exists
 
@@ -102,7 +104,7 @@ The `Scenario` model is intentionally minimal — drop in any of your own tools.
 | `WRONG_ARG_TYPE` | required arg present but its Python type didn't match the tool's JSON-Schema `type` |
 | `WRONG_ARG_VALUE` | required arg present but a `arg_value_checks[name](value)` returned False |
 
-A single response can hit multiple modes (e.g., correct tool but missing arg + wrong type on another arg). The scorecard lists them all.
+A single response can hit multiple modes (e.g., correct tool but missing arg + wrong type on another arg). Every `tool_use` block in the response is scored, so a wrong call followed by the right one still fails. The scorecard lists every failure.
 
 ## Built-in scenario coverage
 
@@ -124,10 +126,10 @@ pytest -q
 ```
 
 ```
-10 passed in 0.06s
+16 passed in 0.05s
 ```
 
-Each failure mode has a dedicated test that produces it via `MockBackend`. An end-to-end test runs the first 5 built-in scenarios through a deterministic mock.
+Each failure mode has a dedicated test that produces it via `MockBackend`. An end-to-end test runs the first 5 built-in scenarios through a deterministic mock. `tests/test_multi_call.py` feeds `AnthropicBackend` a stubbed client whose response holds several `tool_use` blocks and checks every one is scored.
 
 ## Project layout
 
@@ -138,7 +140,7 @@ Each failure mode has a dedicated test that produces it via `MockBackend`. An en
 │   ├── runner.py      # Scenario, FailureMode, score_call, evaluate, EvalSummary
 │   ├── backends.py    # ToolUseBackend protocol + Mock + Anthropic adapter
 │   └── dataset.py     # built-in 30 scenarios + 5 tool definitions
-├── tests/             # 10 pytest cases, one per failure mode + end-to-end
+├── tests/             # 16 pytest cases: one per failure mode, end-to-end, multi-call scoring
 └── bench/
     ├── run_anthropic.py     # real Haiku 4.5 run
     └── anthropic_results.json
@@ -148,7 +150,7 @@ Each failure mode has a dedicated test that produces it via `MockBackend`. An en
 
 **Single model in published results.** Only Haiku 4.5 in the committed `anthropic_results.json`. Adding a Groq Llama 3.1-8B or 3.3-70B comparison is straightforward (the protocol is the same; OpenAI / Groq tool-call shapes differ but the parsing is mechanical) and was deferred for v0.1.
 
-**No multi-turn tool execution.** The harness scores the *first* tool call only. For multi-step scenarios in the built-in set, we test that the first call is correct — verifying the full chain would require actually executing the tools and feeding results back, which is a different scope.
+**No multi-turn tool execution.** The harness scores one model response, and every tool call in it must be a correct call to `expected_tool`. For the multi-step scenarios that means the model must make the first call and wait for its result: emitting the dependent call in the same response counts as `wrong_tool_name`. Verifying the full chain would require actually executing the tools and feeding results back, which is a different scope.
 
 **Scenario set is hand-curated, not crowd-labeled.** 30 scenarios is enough to surface big differences between models but not enough for confidence intervals. For peer-reviewed claims, expand to several hundred scenarios with multiple annotators.
 

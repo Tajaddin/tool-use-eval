@@ -1,7 +1,8 @@
 """Backend protocol + Mock + Anthropic adapters.
 
 Every backend takes ``(scenario_text, tools, system_prompt)`` and returns
-either a :class:`ToolCall` (with name + arguments) or a plain text reply.
+the tool calls the model made (each a :class:`ToolCall` with name +
+arguments, in response order) plus any text.
 Backends are responsible for normalizing the underlying SDK's response
 shape into this single representation.
 """
@@ -9,7 +10,7 @@ shape into this single representation.
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 
@@ -24,15 +25,26 @@ class ToolCall:
 
 @dataclass
 class ModelResponse:
-    """Backend output: either a tool call or a freeform text reply."""
+    """Backend output: every tool call in the response, in order, plus text.
 
-    tool_call: ToolCall | None
-    text: str
+    ``tool_call`` is the first call. Passing only ``tool_call`` is shorthand for
+    a response with that single call.
+    """
+
+    tool_call: ToolCall | None = None
+    text: str = ""
     raw: Any = None
+    tool_calls: list[ToolCall] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.tool_calls and self.tool_call is None:
+            self.tool_call = self.tool_calls[0]
+        elif self.tool_call is not None and not self.tool_calls:
+            self.tool_calls = [self.tool_call]
 
     @property
     def used_tool(self) -> bool:
-        return self.tool_call is not None
+        return bool(self.tool_calls)
 
 
 class ToolUseBackend(Protocol):
@@ -87,16 +99,12 @@ class AnthropicBackend:
         if system:
             kwargs["system"] = system
         resp = self.client.messages.create(**kwargs)
-        tool_call: ToolCall | None = None
+        tool_calls: list[ToolCall] = []
         text_parts: list[str] = []
         for block in resp.content:
             btype = getattr(block, "type", "")
             if btype == "tool_use":
-                tool_call = ToolCall(
-                    name=block.name,
-                    arguments=dict(block.input),
-                    raw=block,
-                )
+                tool_calls.append(ToolCall(name=block.name, arguments=dict(block.input), raw=block))
             elif btype == "text":
                 text_parts.append(block.text)
-        return ModelResponse(tool_call=tool_call, text="".join(text_parts), raw=resp)
+        return ModelResponse(tool_calls=tool_calls, text="".join(text_parts), raw=resp)
