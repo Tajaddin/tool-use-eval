@@ -43,6 +43,7 @@ def main() -> int:
                 "used_tool": r.used_tool,
                 "chosen_tool": r.chosen_tool,
                 "arguments": r.arguments,
+                "tool_calls": [{"name": c.name, "arguments": c.arguments} for c in r.tool_calls],
                 "text_excerpt": r.text_excerpt,
                 "passed": r.scorecard.passed,
                 "failures": [f.value for f in r.scorecard.failures],
